@@ -37,7 +37,8 @@ struct scope : statement_base<scope<Args...>>
           }(std::make_index_sequence<var_indices.size()>{});
 
           if constexpr (std::remove_reference_t<decltype(stat)>::is_variable) {
-            stat(std::get<decltype(var_indices)::size()>(variables), var_args);
+            auto& target = std::get<var_indices.size()>(variables);
+            std::apply(stat, std::make_tuple(std::ref(target), var_args));
           } else {
             std::apply(stat, var_args);
           }
