@@ -6,13 +6,10 @@
 #include <tuple>
 
 template <typename... Args>
-using variables = scope_var_types<Args...>::StatementFunctionType;
+using variables = scope_var_types<Args...>::tuple_type;
 
 template <typename... Args> struct scope : statement_base<scope<Args...>> {
-  scope(Args... args)
-      : fns(args...),
-        variables(
-            scope_var_types<Args...>(std::move(args)...).to_tuple_impl()) {};
+  scope(Args... args) : fns(args...), variables() {};
 
   void invoke_impl() {
     [this]<size_t... I>(std::index_sequence<I...>) {

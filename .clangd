@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-std=c++20, -Iinclude, -include, all.hpp]
+  Add: [-std=c++20, -Iinclude, -include, all.hpp,-MD, -MF build/main.d]
