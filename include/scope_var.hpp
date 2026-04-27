@@ -1,39 +1,74 @@
 #pragma once
 
+#include "argpack.hpp"
 #include "variable.hpp"
 
-template <typename... Args> struct ArgumentPack {};
+template <typename Pack, typename T>
+using append_if_var =
+    std::conditional_t<is_variable_v<T>,
+                       merge_argument_pack_t<Pack, ArgumentPack<T>>, Pack>;
 
-template <typename... Args> struct first_pack_arg {
+template <typename... Packs> struct UnpackStatementArgs;
+
+template <typename... F>
+struct UnpackStatementArgs<ArgumentPack<variable<F...>>> {
+  using type = UnpackStatementArgs<variable<F>...>;
+};
+
+template <> struct UnpackStatementArgs<ArgumentPack<>> {
   using type = ArgumentPack<>;
 };
 
-template <typename T, typename... Args> struct first_pack_arg<T, Args...> {
-  using type = ArgumentPack<T>;
+template <typename T> struct UnpackStatementArgs<ArgumentPack<variable<T>>> {
+  using type = ArgumentPack<std::invoke_result_t<T> &>;
+};
+
+template <typename... T> struct UnpackStatementArgs<ArgumentPack<T...>> {
+  using type = ArgumentPack<>;
+};
+
+template <typename... T>
+struct UnpackStatementArgs<ArgumentPack<T...>,
+                           UnpackStatementArgs<ArgumentPack<T...>>> {
+  using type = ArgumentPack<>;
+};
+
+template <typename First, typename... Rest>
+struct UnpackStatementArgs<ArgumentPack<variable<First>, variable<Rest>...>> {
+  using current_type = std::invoke_result_t<First> &;
+  using type = merge_argument_pack_t<
+      ArgumentPack<current_type>,
+      typename UnpackStatementArgs<ArgumentPack<current_type>,
+                                   variable<Rest>...>::type>;
+};
+
+template <typename... Front, typename Current, typename... Back>
+struct UnpackStatementArgs<ArgumentPack<Front...>, variable<Current>,
+                           variable<Back>...> {
+  using current_type = std::invoke_result_t<Current, Front...> &;
+  using merged_pack = ArgumentPack<Front..., current_type>;
+
+  using type = merge_argument_pack_t<
+      ArgumentPack<current_type>,
+      typename UnpackStatementArgs<merged_pack, variable<Back>...>::type>;
 };
 
 template <typename... Args>
-using first_pack_arg_t = first_pack_arg<Args...>::type;
+using unpack_statements_t = typename UnpackStatementArgs<Args...>::type;
 
-template <typename... Packs> struct MergeArgumentPack;
+template <typename F, typename Pack> struct VariableType;
 
-template <> struct MergeArgumentPack<> {
-  using type = ArgumentPack<>;
+template <typename F, typename... Args>
+struct VariableType<F, ArgumentPack<Args...>> {
+  using type = std::invoke_result_t<F, Args...>;
 };
 
-template <typename... Args> struct MergeArgumentPack<ArgumentPack<Args...>> {
-  using type = ArgumentPack<Args...>;
+template <typename F> struct VariableType<F, ArgumentPack<>> {
+  using type = std::invoke_result_t<F>;
 };
 
-template <typename... Args1, typename... Args2, typename... Packs>
-struct MergeArgumentPack<ArgumentPack<Args1...>, ArgumentPack<Args2...>,
-                         Packs...> {
-  using type =
-      MergeArgumentPack<ArgumentPack<Args1..., Args2...>, Packs...>::type;
-};
-
-template <typename... Packs>
-using merge_argument_pack_t = MergeArgumentPack<Packs...>::type;
+template <typename F, typename ArgsPack>
+using variable_type_t = typename VariableType<F, ArgsPack>::type;
 
 template <typename T, typename Predicate>
 auto FilterOneArgumentPack(ArgumentPack<T>, Predicate p) {
@@ -66,13 +101,6 @@ struct scope_var_impl_type<PrevPack, I, T, false, Rest...> {
   using tuple_type = std::tuple<>;
 };
 
-template <typename F, typename Pack> struct VariableType;
-
-template <typename F, typename... Args>
-struct VariableType<F, ArgumentPack<Args...>> {
-  using type = std::invoke_result_t<F, Args...>;
-};
-
 template <typename PrevPack, size_t I, typename T, typename... Rest>
 struct scope_var_impl_type<PrevPack, I, T, true, Rest...> {
   scope_var_impl_type(T t) {}
@@ -90,7 +118,8 @@ struct scope_var_impl_type<PrevPack, I, T, true, Rest...> {
   //     std::invoke_result_t<typename T::fn_type, PrevPack>
   //   >;
   // PrevPack must be filtered, also mapped to return values
-  using value_type = std::invoke_result_t<typename T::fn_type>;
+  using value_type =
+      variable_type_t<typename T::fn_type, unpack_statements_t<PrevPack>>;
   using tuple_type = std::tuple<value_type>;
 
   value_type value;
@@ -108,8 +137,7 @@ using parent_type_first = scope_var_impl_type<PrevPack, N - sizeof...(Rest) - 1,
 
 template <typename PrevPack, size_t N, typename T, typename... Rest>
 using parent_type_rest =
-    scope_var_impl_types<merge_argument_pack_t<PrevPack, ArgumentPack<T>>, N,
-                         Rest...>;
+    scope_var_impl_types<append_if_var<PrevPack, T>, N, Rest...>;
 
 template <typename PrevPack, size_t N, typename T, typename... Rest>
 struct scope_var_impl_types<PrevPack, N, T, Rest...>

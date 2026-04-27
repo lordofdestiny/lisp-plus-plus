@@ -9,7 +9,7 @@ template <typename... Args>
 using variables = scope_var_types<Args...>::tuple_type;
 
 template <typename... Args> struct scope : statement_base<scope<Args...>> {
-  scope(Args... args) : fns(args...), variables(), _(args...) {}
+  scope(Args... args) : fns(args...), variables() {}
 
   void invoke_impl() {
     [this]<size_t... I>(std::index_sequence<I...>) {
@@ -33,7 +33,8 @@ template <typename... Args> struct scope : statement_base<scope<Args...>> {
 
             if constexpr (std::remove_reference_t<
                               decltype(stat)>::is_variable) {
-              stat(std::get<decltype(var_indices)::size()>(variables));
+              stat(std::get<decltype(var_indices)::size()>(variables),
+                   var_args);
             } else {
               std::apply(stat, var_args);
             }
@@ -44,5 +45,4 @@ template <typename... Args> struct scope : statement_base<scope<Args...>> {
 
   std::tuple<Args...> fns;
   variables<Args...> variables;
-  scope_var_types<Args...> _;
 };
