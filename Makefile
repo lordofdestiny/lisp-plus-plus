@@ -1,22 +1,22 @@
 run: build_and_format
+	@echo "Running..."
+	@echo "========================================="
 	@build/main
 
-build_and_format: format
-	@make build/main
+build_and_format: format | build
+	@echo "Building..."
+	@cmake --build build
+	@ln -sf build/compile_commands.json compile_commands.json 
 	
-build/main: main.cpp | build
-	@clang++ -std=c++20 -O2 -o $@ $< -Iinclude -include all.hpp -MMD -MF build/main.d
-
 build:
-	@mkdir -p build
+	@echo "Preparing..."
+	@cmake --preset main > /dev/null 2>&1
 
 clean:
-	@rm -rf main
 	@rm -rf build
 
 format:
-	@clang-format -files=fmt.txt -i > /dev/null 2>&1
+	@echo "Formatting..."
+	@./format.py
 
-.PHONY: all clean format build
-
--include build/main.d
+.PHONY: all run clean format
