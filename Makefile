@@ -5,7 +5,7 @@ build_and_format: format
 	@make build/main
 	
 build/main: main.cpp | build
-	@clang++ -std=c++20 -o $@ $< -Iinclude -include all.hpp -MD -MF build/main.d -E
+	@clang++ -std=c++20 -o $@ $< -Iinclude -include all.hpp -MD -MF build/main.d
 
 build:
 	@mkdir -p build

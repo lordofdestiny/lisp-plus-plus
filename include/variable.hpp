@@ -9,7 +9,7 @@ struct variable : statement_base<variable<T>> {
   static constexpr bool is_variable = true;
   variable(T arg) {};
 
-  using var_type = std::invoke_result_t<T>;
+  using fn_type = T;
 
   void invoke_impl(auto &_value) { _value = std::invoke(fn); }
 

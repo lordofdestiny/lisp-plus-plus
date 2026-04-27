@@ -1,7 +1,12 @@
 #pragma once
 
-template <size_t I, typename T, bool = T::is_variable>
-struct scope_var_impl_type {
+template <typename... Args> struct scope_var_types;
+
+template <size_t I, typename T, bool is_variable, typename... Rest>
+struct scope_var_impl_type;
+
+template <size_t I, typename T, typename... Rest>
+struct scope_var_impl_type<I, T, false, Rest...> {
   scope_var_impl_type(T t) {}
 
   static constexpr size_t Index = 0;
@@ -10,13 +15,14 @@ struct scope_var_impl_type {
   using tuple_type = std::tuple<>;
 };
 
-template <size_t I, typename T> struct scope_var_impl_type<I, T, true> {
+template <size_t I, typename T, typename... Rest>
+struct scope_var_impl_type<I, T, true, Rest...> {
   scope_var_impl_type(T t) {}
 
   static constexpr size_t Index = I;
   static constexpr size_t Size = 1;
 
-  using value_type = typename T::var_type;
+  using value_type = std::invoke_result_t<typename T::fn_type>;
   using tuple_type = std::tuple<value_type>;
 
   value_type value;
@@ -28,7 +34,8 @@ template <size_t N, typename... Args> struct scope_var_impl_types {
 };
 
 template <size_t N, typename T, typename... Rest>
-using parent_type_first = scope_var_impl_type<N - sizeof...(Rest) - 1, T>;
+using parent_type_first =
+    scope_var_impl_type<N - sizeof...(Rest) - 1, T, T::is_variable, Rest...>;
 
 template <size_t N, typename T, typename... Rest>
 using parent_type_rest = scope_var_impl_types<N, Rest...>;
