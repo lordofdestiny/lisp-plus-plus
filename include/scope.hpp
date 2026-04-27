@@ -9,7 +9,7 @@ template <typename... Args>
 using variables = scope_var_types<Args...>::tuple_type;
 
 template <typename... Args> struct scope : statement_base<scope<Args...>> {
-  scope(Args... args) : fns(args...), variables() {};
+  scope(Args... args) : fns(args...), variables(), _(args...) {}
 
   void invoke_impl() {
     [this]<size_t... I>(std::index_sequence<I...>) {
@@ -44,4 +44,5 @@ template <typename... Args> struct scope : statement_base<scope<Args...>> {
 
   std::tuple<Args...> fns;
   variables<Args...> variables;
+  scope_var_types<Args...> _;
 };
