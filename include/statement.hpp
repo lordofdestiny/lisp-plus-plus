@@ -23,9 +23,9 @@ struct statement : statement_base<statement<T>>
   statement(T arg) {};
 
   template<typename U = T, typename... Args>
-  void invoke_impl(Args... args)
+  void invoke_impl(Args&&... args)
   {
-    std::invoke(fn, args...);
+    std::invoke(fn, std::forward<Args>(args)...);
   }
 
   T fn;

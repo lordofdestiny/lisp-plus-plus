@@ -13,7 +13,10 @@ struct is_variable<T, std::void_t<decltype(T::is_variable)>>
 };
 
 template<typename T>
-static constexpr bool is_variable_v = is_variable<T>::value;
+static constexpr bool is_variable_v =
+  is_variable<std::remove_cvref_t<T>>::value;
+
+#include <iostream>
 
 template<typename T>
 struct variable : statement_base<variable<T>>
