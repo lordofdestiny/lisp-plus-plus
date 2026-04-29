@@ -39,12 +39,30 @@ struct UnpackStatementArgs<ArgumentPack<variable<First>, variable<Rest>...>>
     unpack_statements_t<ArgumentPack<current_type>, variable<Rest>...>>;
 };
 
+template<typename Enabler, typename F, typename... Args>
+struct ResolveReturnValue
+{
+  using type = std::invoke_result_t<F>;
+};
+
+template<typename F, typename... Args>
+struct ResolveReturnValue<std::void_t<std::invoke_result_t<F, Args...>>,
+                          F,
+                          Args...>
+{
+  using type = std::invoke_result_t<F, Args...>;
+};
+
+template<typename F, typename... Args>
+using resolve_return_value_t =
+  typename ResolveReturnValue<void, F, Args...>::type;
+
 template<typename... Front, typename Current, typename... Back>
 struct UnpackStatementArgs<ArgumentPack<Front...>,
                            variable<Current>,
                            variable<Back>...>
 {
-  using current_type = std::invoke_result_t<Current, Front...>&;
+  using current_type = resolve_return_value_t<Current, Front...>&;
   using merged_pack = ArgumentPack<Front..., current_type>;
 
   using type =
@@ -58,15 +76,8 @@ struct VariableType;
 template<typename F, typename... Args>
 struct VariableType<F, ArgumentPack<Args...>>
 {
-  using type = std::invoke_result_t<F, Args...>;
+  using type = resolve_return_value_t<F, Args...>;
 };
-
-template<typename F>
-struct VariableType<F, ArgumentPack<>>
-{
-  using type = std::invoke_result_t<F>;
-};
-
 template<typename F, typename ArgsPack>
 using variable_type_t = typename VariableType<F, ArgsPack>::type;
 
