@@ -9,9 +9,9 @@ program main(variable([] { return "Hello"s; }),
              scope(statement([] { std::cout << "A\n"; }),
                    variable([] { return 1; }),
                    statement([](int& a) { a++; }),
-                   variable([](int& a) { return a + 2; }),
                    variable([]() { return 1.5; }),
-                   statement([](int& a, int& b, double& c) {
+                   variable([](int& a, double& b) { return a / b + 2; }),
+                   statement([](int& a, double& b, double& c) {
                      std::cout << "B: " << a * b + c << "\n";
                    })),
              variable([](auto& q) { return 1; }),
