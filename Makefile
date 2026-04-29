@@ -13,7 +13,7 @@ build:
 	@cmake --preset main > /dev/null 2>&1
 
 clean:
-	@rm -rf build
+	@rm -rf build compile_commands.json
 
 format:
 	@echo "Formatting..."
