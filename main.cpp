@@ -19,4 +19,5 @@ program main(variable([] { return "Hello"s; }),
                    variable([](double& a) { return 2.5; }),
                    statement([](double& a, double& b) {
                      std::cout << a * b * 0.5 << std::endl;
-                   })));
+                   })),
+             scope(statement([] { std::cout << "Hello world!\n"; })));

@@ -15,14 +15,11 @@ using append_if_var =
 template<typename... Packs>
 struct UnpackStatementArgs;
 
-template<typename... F>
-struct UnpackStatementArgs<ArgumentPack<variable<F...>>>
-{
-  using type = UnpackStatementArgs<variable<F>...>;
-};
+template<typename... Args>
+using unpack_statements_t = typename UnpackStatementArgs<Args...>::type;
 
-template<>
-struct UnpackStatementArgs<ArgumentPack<>>
+template<typename... T>
+struct UnpackStatementArgs<ArgumentPack<T...>>
 {
   using type = ArgumentPack<>;
 };
@@ -33,27 +30,13 @@ struct UnpackStatementArgs<ArgumentPack<variable<T>>>
   using type = ArgumentPack<std::invoke_result_t<T>&>;
 };
 
-template<typename... T>
-struct UnpackStatementArgs<ArgumentPack<T...>>
-{
-  using type = ArgumentPack<>;
-};
-
-template<typename... T>
-struct UnpackStatementArgs<ArgumentPack<T...>,
-                           UnpackStatementArgs<ArgumentPack<T...>>>
-{
-  using type = ArgumentPack<>;
-};
-
 template<typename First, typename... Rest>
 struct UnpackStatementArgs<ArgumentPack<variable<First>, variable<Rest>...>>
 {
   using current_type = std::invoke_result_t<First>&;
   using type = merge_argument_pack_t<
     ArgumentPack<current_type>,
-    typename UnpackStatementArgs<ArgumentPack<current_type>,
-                                 variable<Rest>...>::type>;
+    unpack_statements_t<ArgumentPack<current_type>, variable<Rest>...>>;
 };
 
 template<typename... Front, typename Current, typename... Back>
@@ -64,13 +47,10 @@ struct UnpackStatementArgs<ArgumentPack<Front...>,
   using current_type = std::invoke_result_t<Current, Front...>&;
   using merged_pack = ArgumentPack<Front..., current_type>;
 
-  using type = merge_argument_pack_t<
-    ArgumentPack<current_type>,
-    typename UnpackStatementArgs<merged_pack, variable<Back>...>::type>;
+  using type =
+    merge_argument_pack_t<ArgumentPack<current_type>,
+                          unpack_statements_t<merged_pack, variable<Back>...>>;
 };
-
-template<typename... Args>
-using unpack_statements_t = typename UnpackStatementArgs<Args...>::type;
 
 template<typename F, typename Pack>
 struct VariableType;
