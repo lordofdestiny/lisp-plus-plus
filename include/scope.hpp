@@ -14,7 +14,7 @@ struct scope : statement_base<scope<Args...>>
 {
   scope(Args... args)
     : fns(args...)
-    , variables()
+    , myvars()
   {
   }
 
@@ -33,11 +33,11 @@ struct scope : statement_base<scope<Args...>>
             .size();
 
         auto var_args = [&]<size_t... J>(std::index_sequence<J...> j) {
-          return std::tie((std::get<J>(variables))...);
+          return std::tie((std::get<J>(myvars))...);
         }(std::make_index_sequence<var_count>{});
 
         if constexpr (is_variable_v<decltype(stat)>) {
-          auto& target = std::get<var_count>(variables);
+          auto& target = std::get<var_count>(myvars);
           std::apply(stat, std::make_tuple(std::ref(target), var_args));
         } else {
           std::apply(stat, var_args);
@@ -46,5 +46,5 @@ struct scope : statement_base<scope<Args...>>
   }
 
   std::tuple<Args...> fns;
-  variables<Args...> variables;
+  variables<Args...> myvars;
 };

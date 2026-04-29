@@ -147,12 +147,12 @@ struct scope_var_impl_types<PrevPack, N, T, Rest...>
   : parent_type_first<PrevPack, N, T, Rest...>
   , parent_type_rest<PrevPack, N, T, Rest...>
 {
-  using parent_type_first = parent_type_first<PrevPack, N, T, Rest...>;
-  using parent_type_rest = parent_type_rest<PrevPack, N, T, Rest...>;
+  using parent_type_first_t = parent_type_first<PrevPack, N, T, Rest...>;
+  using parent_type_rest_t = parent_type_rest<PrevPack, N, T, Rest...>;
 
   using tuple_type = decltype(std::tuple_cat(
-    std::declval<typename parent_type_first::tuple_type>(),
-    std::declval<typename parent_type_rest::tuple_type>()));
+    std::declval<typename parent_type_first_t::tuple_type>(),
+    std::declval<typename parent_type_rest_t::tuple_type>()));
 
   static constexpr size_t Size = std::tuple_size<tuple_type>();
 };
